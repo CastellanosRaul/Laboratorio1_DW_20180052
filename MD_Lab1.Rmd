@@ -1,0 +1,65 @@
+---
+title: "Laboratorio 1 Data Wrangling"
+output:
+  html_notebook: default
+---
+### Raul Castellanos, 20180052
+
+##### Problema 1:
+##### Descripción: Ha sido contratado para trabajar en una consultoría a una embotelladora nacional. La embotelladora se encarga de distribuir su producto a distintos clientes, utilizando diferentes equipos de transporte y pilotos.
+
+##### Requerimientos: 
+* Unificar todos los archivos en una tabla única.
+* Agregar una columna adicional que identifique al mes y año de ese archivo, por
+ejemplo: Fecha: 01-2018.
+* Las variables que el archivo necesita tener son: COD_VIAJE, CLIENTE, UBICACIÓN, CANTIDAD, PILOTO, Q, CREDITO, UNIDAD, Fecha.
+
+##### Código para la solución
+##### En la documentación del paquete [dplyr](https://www.rdocumentation.org/packages/dplyr/versions/0.7.8) podemos encontrar la función de [bind](https://www.rdocumentation.org/packages/dplyr/versions/0.7.8/topics/bind) la cuál nos permite unir varias dataframes, y en este caso utilicé la opción de bind_rows que permite unir las dataframes una debajo de otra y adicionalmente nos pide un ID, que nos permite identificar de qué dataframe están extraidos los datos, y lo aproveché para crear la columna de fecha.
+```{r cache=TRUE}
+library(readxl)
+library(readr)
+library(dplyr)
+library(writexl)
+```
+
+```{r}
+Nombres <- list.files(pattern = "*.xlsx")
+NombresL<- substr(Nombres,1,7)
+Lista <- lapply(Nombres, read_excel)
+names(Lista) <- NombresL
+
+Columnas <- function(x){
+  x <- x[,1:8]
+  return(x)
+}
+Lista <- lapply(Lista,Columnas)
+TablasUnidas <- bind_rows(Lista, .id = "Fecha")
+TablasUnidas <- TablasUnidas[,c(2,1,3,4,5,6,7,8,9)] #le cambie las columnas por preferencia del orden
+write_excel_csv2(TablasUnidas,"DataFinal_DW.xls",delim = ",")
+```
+
+##### Problema 2:
+##### Utilizando la función lapply, encuentre la moda de cada vector de una lista de por lo menos 3 vectores.
+
+##### Por motivos de facilidad, convertí los vectores a dataframes para poder agruparlos por los números y contarlos por medio de summarise, para finalmente extraer la suma más alta de la columna duplicados por medio de which.max. 
+
+```{r}
+ListaVec <- list(vector <- sample(1:30,100,TRUE),
+                 vector2 <- sample(1:15,50,TRUE),
+                 vector3 <- sample(1:50,200,TRUE))
+Moda <- function(x){
+  df0 <- as.data.frame(x)
+  df1 <- df0 %>% group_by(x) %>% summarise(Duplicados = n(), .groups ='drop')
+  dfduplicado <- df1[which.max(df1$Duplicados),]
+  return(dfduplicado)
+}
+Moda_Lista <- lapply(ListaVec,Moda)
+```
+ 
+##### Problema 3:
+##### Descargue de la página web de la SAT el aechivo de Parque Vehicular de Enero 2019
+
+```{r}
+vehiculos2020 <- read_delim("ParqueVehicular_2020.txt", delim = "|")
+```
